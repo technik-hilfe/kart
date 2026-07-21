@@ -1,8 +1,9 @@
 # Mini Kart Cup 3D
 
-Ein eigenstaendiges 3D-Kartspiel fuer den Browser mit zwei Bot-Gegnern,
-drei Runden, dynamischer Position, Ergebnisanzeige, enger technischer Strecke
-und dichtem Wald rund um den Kurs.
+Ein eigenstaendiges 3D-Kartspiel fuer den Browser mit fuenf Bot-Gegnern,
+drei Schwierigkeitsstufen, vier Strecken, drei Runden, dynamischer Position,
+Ergebnisanzeige und dichtem Wald rund um die Kurse. Strecke 4 ist eine
+fahrbare Kart-Version von Spa-Francorchamps in Belgien.
 
 ## Auf GitHub Pages veroeffentlichen
 

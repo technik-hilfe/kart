@@ -542,6 +542,10 @@ kbd {
   gap: 6px;
 }
 
+.track-picker .menu-option-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .menu-option {
   position: relative;
   min-width: 0;
@@ -552,6 +556,7 @@ kbd {
 .difficulty-easy { --option-color: #64dc8c; }
 .difficulty-medium { --option-color: var(--yellow); }
 .difficulty-hard { --option-color: var(--red); }
+.track-spa { --option-color: #f4c928; }
 
 .menu-option input {
   position: absolute;
@@ -1060,6 +1065,7 @@ kbd {
   .driver-chip i { height: 20px; }
   .race-setup-grid { gap: 8px; margin-bottom: 9px; }
   .menu-option-grid { gap: 4px; }
+  .track-picker .menu-option-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .menu-option > span { min-height: 34px; padding: 3px; }
   .menu-option strong { font-size: 8px; }
   .menu-option small { font-size: 6px; }
