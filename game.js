@@ -13,6 +13,7 @@
   const countdown = document.getElementById("countdown");
   const trackToast = document.getElementById("trackToast");
   const touchControls = document.getElementById("touchControls");
+  const fullscreenButton = document.getElementById("fullscreenButton");
   const lapValue = document.getElementById("lapValue");
   const positionValue = document.getElementById("positionValue");
   const timeValue = document.getElementById("timeValue");
@@ -380,14 +381,14 @@
     roadBase.receiveShadow = true;
     world.add(roadBase);
 
-    const concreteTexture = createConcreteTexture();
-    const roadMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      map: concreteTexture,
-      roughness: 0.98,
-      metalness: 0
+    // A solid unlit surface stays unmistakably concrete-grey even when the
+    // game is opened directly as a local HTML file or the track is in shadow.
+    const roadMaterial = new THREE.MeshBasicMaterial({
+      color: 0x858b8e,
+      side: THREE.DoubleSide
     });
-    const road = new THREE.Mesh(createRoadRibbon(TRACK_HALF, 0.055), roadMaterial);
+    const road = new THREE.Mesh(createFullRibbon(TRACK_HALF, 0.09), roadMaterial);
+    road.renderOrder = 2;
     road.receiveShadow = true;
     track.roadGeometry = road.geometry;
     world.add(road);
@@ -414,61 +415,6 @@
     const trees = createTrees();
 
     return { ground, road, curb, trees, treeCount: trees.count, sun, sunTarget };
-  }
-
-  function createConcreteTexture() {
-    const size = 192;
-    const surface = document.createElement("canvas");
-    surface.width = size;
-    surface.height = size;
-    const context = surface.getContext("2d");
-    context.fillStyle = "#747a7d";
-    context.fillRect(0, 0, size, size);
-
-    const random = mulberry32(48127);
-    for (let index = 0; index < 4200; index += 1) {
-      const shade = Math.floor(75 + random() * 105);
-      const alpha = 0.035 + random() * 0.12;
-      const grain = random() > 0.84 ? 2 : 1;
-      context.fillStyle = `rgba(${shade}, ${shade}, ${shade}, ${alpha})`;
-      context.fillRect(random() * size, random() * size, grain, grain);
-    }
-
-    const texture = new THREE.CanvasTexture(surface);
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
-    texture.needsUpdate = true;
-    return texture;
-  }
-
-  function createRoadRibbon(halfWidth, y) {
-    const positions = [];
-    const uvs = [];
-    const indices = [];
-    const nodeCount = track.nodes.length;
-    for (let index = 0; index <= nodeCount; index += 1) {
-      const node = track.nodes[index % nodeCount];
-      positions.push(node.x + node.nx * halfWidth, y, node.z + node.nz * halfWidth);
-      positions.push(node.x - node.nx * halfWidth, y, node.z - node.nz * halfWidth);
-      const v = index * track.step / 6.4;
-      uvs.push(0, v, 1, v);
-      if (index < nodeCount) {
-        const a = index * 2;
-        const b = a + 1;
-        const c = a + 2;
-        const d = a + 3;
-        indices.push(a, b, c, b, d, c);
-      }
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-    geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
-    geometry.setIndex(indices);
-    geometry.computeVertexNormals();
-    geometry.computeBoundingSphere();
-    return geometry;
   }
 
   function createFullRibbon(halfWidth, y) {
@@ -1546,10 +1492,58 @@
     document.querySelectorAll("[data-control].active").forEach((button) => button.classList.remove("active"));
   }
 
+  function currentFullscreenElement() {
+    return document.fullscreenElement
+      || document.webkitFullscreenElement
+      || document.webkitCurrentFullScreenElement
+      || null;
+  }
+
+  function updateFullscreenButton() {
+    const active = Boolean(currentFullscreenElement() || gameShell.classList.contains("fullscreen-fallback"));
+    fullscreenButton.classList.toggle("is-active", active);
+    fullscreenButton.setAttribute("aria-pressed", String(active));
+    fullscreenButton.setAttribute("aria-label", active ? "Vollbild beenden" : "Vollbild einschalten");
+    fullscreenButton.title = active ? "Vollbild beenden" : "Vollbild";
+    clearControls();
+    window.setTimeout(resizeRenderer, 30);
+    window.setTimeout(resizeRenderer, 180);
+  }
+
+  async function toggleFullscreen() {
+    const fullscreenElement = currentFullscreenElement();
+    try {
+      if (fullscreenElement) {
+        const exitFullscreen = document.exitFullscreen
+          || document.webkitExitFullscreen
+          || document.webkitCancelFullScreen;
+        if (exitFullscreen) await exitFullscreen.call(document);
+      } else if (gameShell.classList.contains("fullscreen-fallback")) {
+        gameShell.classList.remove("fullscreen-fallback");
+      } else {
+        const requestFullscreen = gameShell.requestFullscreen
+          || gameShell.webkitRequestFullscreen
+          || gameShell.webkitRequestFullScreen;
+        if (!requestFullscreen) throw new Error("Fullscreen API unavailable");
+        if (requestFullscreen === gameShell.requestFullscreen) {
+          await requestFullscreen.call(gameShell, { navigationUI: "hide" });
+        } else {
+          await requestFullscreen.call(gameShell);
+        }
+      }
+    } catch (error) {
+      gameShell.classList.add("fullscreen-fallback");
+    }
+    updateFullscreenButton();
+  }
+
   function bindEvents() {
     startButton.addEventListener("click", () => startRace());
     restartButton.addEventListener("click", () => startRace());
     menuButton.addEventListener("click", showMenu);
+    fullscreenButton.addEventListener("click", toggleFullscreen);
+    document.addEventListener("fullscreenchange", updateFullscreenButton);
+    document.addEventListener("webkitfullscreenchange", updateFullscreenButton);
     kartColorInputs.forEach((input) => {
       input.addEventListener("change", () => {
         if (input.checked) applyPlayerKartColor(input.value);
@@ -1602,10 +1596,14 @@
         controls[control] = false;
         button.classList.remove("active");
       };
-      button.addEventListener("pointerdown", press);
-      button.addEventListener("pointerup", release);
-      button.addEventListener("pointercancel", release);
-      button.addEventListener("lostpointercapture", release);
+      button.addEventListener("pointerdown", press, { passive: false });
+      button.addEventListener("pointerup", release, { passive: false });
+      button.addEventListener("pointercancel", release, { passive: false });
+      button.addEventListener("lostpointercapture", release, { passive: false });
+    });
+
+    ["contextmenu", "selectstart", "dragstart"].forEach((eventName) => {
+      touchControls.addEventListener(eventName, (event) => event.preventDefault());
     });
   }
 

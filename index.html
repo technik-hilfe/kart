@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#162b25">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="description" content="Mini Kart Cup 3D – ein kleines 3D-Kartrennen über drei Runden.">
   <title>Mini Kart Cup 3D</title>
   <link rel="stylesheet" href="styles.css">
@@ -12,6 +15,12 @@
   <main class="game-shell" id="gameShell" aria-label="Mini Kart Cup">
     <canvas id="gameCanvas" width="1280" height="720" tabindex="0" aria-label="3D-Kartstrecke"></canvas>
     <div class="canvas-shade" aria-hidden="true"></div>
+
+    <button class="fullscreen-button" id="fullscreenButton" type="button" aria-label="Vollbild einschalten" aria-pressed="false" title="Vollbild">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5"></path>
+      </svg>
+    </button>
 
     <section class="hud" id="hud" aria-label="Renninformationen" hidden>
       <div class="hud-card lap-card">
@@ -50,12 +59,20 @@
 
     <div class="touch-controls" id="touchControls" aria-label="Touch-Steuerung" hidden>
       <div class="touch-steer">
-        <button type="button" data-control="left" aria-label="Nach links lenken">&#8592;</button>
-        <button type="button" data-control="right" aria-label="Nach rechts lenken">&#8594;</button>
+        <button type="button" data-control="left" aria-label="Nach links lenken">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"></path></svg>
+        </button>
+        <button type="button" data-control="right" aria-label="Nach rechts lenken">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg>
+        </button>
       </div>
       <div class="touch-pedals">
-        <button type="button" class="touch-brake" data-control="down" aria-label="Bremsen">&#9660;</button>
-        <button type="button" class="touch-gas" data-control="up" aria-label="Gas geben">&#9650;</button>
+        <button type="button" class="touch-brake" data-control="down" aria-label="Bremsen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7 7 7-7"></path></svg>
+        </button>
+        <button type="button" class="touch-gas" data-control="up" aria-label="Gas geben">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 15 7-7 7 7"></path></svg>
+        </button>
       </div>
     </div>
 
