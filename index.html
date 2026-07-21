@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#162b25">
+  <meta name="description" content="Mini Kart Cup 3D – ein kleines 3D-Kartrennen über drei Runden.">
+  <title>Mini Kart Cup 3D</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="game-shell" id="gameShell" aria-label="Mini Kart Cup">
+    <canvas id="gameCanvas" width="1280" height="720" tabindex="0" aria-label="3D-Kartstrecke"></canvas>
+    <div class="canvas-shade" aria-hidden="true"></div>
+
+    <section class="hud" id="hud" aria-label="Renninformationen" hidden>
+      <div class="hud-card lap-card">
+        <span class="hud-kicker">RUNDE</span>
+        <strong><span id="lapValue">1</span><small> / 3</small></strong>
+      </div>
+
+      <div class="hud-card position-card">
+        <span class="hud-kicker">POSITION</span>
+        <strong><span id="positionValue">1</span><small> / 3</small></strong>
+      </div>
+
+      <div class="hud-card time-card">
+        <span class="hud-kicker">RENNZEIT</span>
+        <strong id="timeValue">00:00.000</strong>
+      </div>
+
+      <div class="hud-card standings-card" id="standings" aria-label="Aktuelle Reihenfolge"></div>
+
+      <div class="hud-card speed-card">
+        <div class="speed-copy">
+          <span class="hud-kicker">TEMPO</span>
+          <strong><span id="speedValue">0</span><small> km/h</small></strong>
+        </div>
+        <div class="speed-track" aria-hidden="true"><i id="speedBar"></i></div>
+      </div>
+
+      <div class="controls-hint" aria-hidden="true">
+        <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
+        <span>oder Pfeiltasten</span>
+      </div>
+    </section>
+
+    <div class="countdown" id="countdown" aria-live="assertive" hidden>3</div>
+    <div class="track-toast" id="trackToast" role="status" aria-live="polite"></div>
+
+    <div class="touch-controls" id="touchControls" aria-label="Touch-Steuerung" hidden>
+      <div class="touch-steer">
+        <button type="button" data-control="left" aria-label="Nach links lenken">&#8592;</button>
+        <button type="button" data-control="right" aria-label="Nach rechts lenken">&#8594;</button>
+      </div>
+      <div class="touch-pedals">
+        <button type="button" class="touch-brake" data-control="down" aria-label="Bremsen">&#9660;</button>
+        <button type="button" class="touch-gas" data-control="up" aria-label="Gas geben">&#9650;</button>
+      </div>
+    </div>
+
+    <section class="screen-overlay start-screen" id="startScreen">
+      <div class="start-card">
+        <div class="flag-mark" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <p class="eyebrow">ECHTES 3D &nbsp;&bull;&nbsp; 3 RUNDEN &nbsp;&bull;&nbsp; 2 GEGNER</p>
+        <h1>MINI KART<br><em>CUP 3D</em></h1>
+        <p class="intro-copy">Steig ins Kart, meistere die Kurven und hänge beide Bots in drei Runden ab.</p>
+
+        <div class="driver-preview" aria-label="Teilnehmer">
+          <div class="driver-chip player-chip"><i></i><span><small>DU</small>Sunny</span></div>
+          <div class="driver-chip"><i></i><span><small>BOT 1</small>Turbo Tom</span></div>
+          <div class="driver-chip"><i></i><span><small>BOT 2</small>Kurven-Kim</span></div>
+        </div>
+
+        <div class="start-controls">
+          <span class="key-cluster" aria-hidden="true"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
+          <span><strong>WASD / Pfeiltasten</strong><small>Gas, bremsen und lenken</small></span>
+        </div>
+
+        <button class="primary-button" id="startButton" type="button">
+          Rennen starten <span aria-hidden="true">&#8594;</span>
+        </button>
+      </div>
+      <p class="start-note">Bleib auf der Strecke &ndash; Gras bremst dich aus.</p>
+    </section>
+
+    <section class="screen-overlay result-screen" id="resultScreen" hidden>
+      <div class="result-card">
+        <div class="result-badge" id="resultBadge">1</div>
+        <p class="eyebrow" id="resultEyebrow">RENNEN BEENDET</p>
+        <h2 id="resultTitle">Stark gefahren!</h2>
+        <p class="result-lead">Deine Gesamtzeit</p>
+        <strong class="hero-time" id="resultTime">00:00.000</strong>
+
+        <div class="result-table-wrap">
+          <table class="result-table">
+            <thead>
+              <tr>
+                <th>Platz</th>
+                <th>Fahrer</th>
+                <th>Gesamt</th>
+                <th>Beste Runde</th>
+                <th>&Oslash; Tempo</th>
+              </tr>
+            </thead>
+            <tbody id="resultRows"></tbody>
+          </table>
+        </div>
+
+        <div class="lap-summary" id="lapSummary" aria-label="Deine Rundenzeiten"></div>
+
+        <div class="result-actions">
+          <button class="primary-button" id="restartButton" type="button">Nochmal fahren <span aria-hidden="true">&#8635;</span></button>
+          <button class="secondary-button" id="menuButton" type="button">Zum Start</button>
+        </div>
+      </div>
+    </section>
+
+    <noscript>Dieses Spiel benötigt JavaScript.</noscript>
+  </main>
+  <script src="three.min.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
