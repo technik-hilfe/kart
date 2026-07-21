@@ -23,8 +23,11 @@
   const resultEyebrow = document.getElementById("resultEyebrow");
   const resultTitle = document.getElementById("resultTitle");
   const resultTime = document.getElementById("resultTime");
+  const resultBestLapTime = document.getElementById("resultBestLapTime");
   const resultRows = document.getElementById("resultRows");
   const lapSummary = document.getElementById("lapSummary");
+  const playerColorMarker = document.getElementById("playerColorMarker");
+  const kartColorInputs = [...document.querySelectorAll('input[name="kartColor"]')];
 
   if (!THREE) {
     showFatalError("Die lokale 3D-Laufzeit konnte nicht geladen werden.");
@@ -42,6 +45,13 @@
   const FIXED_STEP = 1 / 60;
   const METERS_PER_UNIT = 1;
   const MAX_DUST = 140;
+  const KART_COLORS = Object.freeze({
+    blue: { body: 0x2f7df6, accent: 0xbdd7ff, css: "#2f7df6" },
+    red: { body: 0xf0605f, accent: 0xffd6d2, css: "#f0605f" },
+    yellow: { body: 0xffd33f, accent: 0xfff4b0, css: "#ffd33f" },
+    green: { body: 0x3cbe6b, accent: 0xcaffd9, css: "#3cbe6b" }
+  });
+  let selectedKartColor = kartColorInputs.find((input) => input.checked)?.value || "blue";
 
   const controls = { up: false, down: false, left: false, right: false };
   const controlPoints = [
@@ -370,8 +380,14 @@
     roadBase.receiveShadow = true;
     world.add(roadBase);
 
-    const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x454c55, roughness: 0.92, metalness: 0.01 });
-    const road = new THREE.Mesh(createFullRibbon(TRACK_HALF, 0.055), roadMaterial);
+    const concreteTexture = createConcreteTexture();
+    const roadMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      map: concreteTexture,
+      roughness: 0.98,
+      metalness: 0
+    });
+    const road = new THREE.Mesh(createRoadRibbon(TRACK_HALF, 0.055), roadMaterial);
     road.receiveShadow = true;
     track.roadGeometry = road.geometry;
     world.add(road);
@@ -398,6 +414,61 @@
     const trees = createTrees();
 
     return { ground, road, curb, trees, treeCount: trees.count, sun, sunTarget };
+  }
+
+  function createConcreteTexture() {
+    const size = 192;
+    const surface = document.createElement("canvas");
+    surface.width = size;
+    surface.height = size;
+    const context = surface.getContext("2d");
+    context.fillStyle = "#747a7d";
+    context.fillRect(0, 0, size, size);
+
+    const random = mulberry32(48127);
+    for (let index = 0; index < 4200; index += 1) {
+      const shade = Math.floor(75 + random() * 105);
+      const alpha = 0.035 + random() * 0.12;
+      const grain = random() > 0.84 ? 2 : 1;
+      context.fillStyle = `rgba(${shade}, ${shade}, ${shade}, ${alpha})`;
+      context.fillRect(random() * size, random() * size, grain, grain);
+    }
+
+    const texture = new THREE.CanvasTexture(surface);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+    texture.needsUpdate = true;
+    return texture;
+  }
+
+  function createRoadRibbon(halfWidth, y) {
+    const positions = [];
+    const uvs = [];
+    const indices = [];
+    const nodeCount = track.nodes.length;
+    for (let index = 0; index <= nodeCount; index += 1) {
+      const node = track.nodes[index % nodeCount];
+      positions.push(node.x + node.nx * halfWidth, y, node.z + node.nz * halfWidth);
+      positions.push(node.x - node.nx * halfWidth, y, node.z - node.nz * halfWidth);
+      const v = index * track.step / 6.4;
+      uvs.push(0, v, 1, v);
+      if (index < nodeCount) {
+        const a = index * 2;
+        const b = a + 1;
+        const c = a + 2;
+        const d = a + 3;
+        indices.push(a, b, c, b, d, c);
+      }
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    geometry.computeBoundingSphere();
+    return geometry;
   }
 
   function createFullRibbon(halfWidth, y) {
@@ -849,7 +920,14 @@
         object.receiveShadow = true;
       }
     });
-    root.userData = { visual, tyres, frontPivots, wheelSpin: 0 };
+    root.userData = {
+      visual,
+      tyres,
+      frontPivots,
+      wheelSpin: 0,
+      paintMaterials: [bodyMaterial, helmetMaterial],
+      accentMaterial
+    };
     world.add(root);
     return root;
   }
@@ -864,9 +942,25 @@
 
   function ensureKartMeshes() {
     if (kartMeshes.size) return;
-    kartMeshes.set("player", createKartMesh(0xffd33f, 0xfff4b0, true));
+    const playerPaint = KART_COLORS[selectedKartColor];
+    kartMeshes.set("player", createKartMesh(playerPaint.body, playerPaint.accent, true));
     kartMeshes.set("tom", createKartMesh(0xf0605f, 0xffdfd8));
     kartMeshes.set("kim", createKartMesh(0x42c5d4, 0xdcfbff));
+  }
+
+  function applyPlayerKartColor(colorName) {
+    const palette = KART_COLORS[colorName];
+    if (!palette) return;
+    selectedKartColor = colorName;
+    document.documentElement.style.setProperty("--player-kart-color", palette.css);
+    if (playerColorMarker) playerColorMarker.style.background = palette.css;
+    kartColorInputs.forEach((input) => { input.checked = input.value === colorName; });
+
+    if (player) player.color = palette.css;
+    const mesh = kartMeshes.get("player");
+    if (!mesh) return;
+    mesh.userData.paintMaterials.forEach((material) => material.color.setHex(palette.body));
+    mesh.userData.accentMaterial.color.setHex(palette.accent);
   }
 
   function createPlayer() {
@@ -876,7 +970,7 @@
       id: "player",
       name: "Sunny (Du)",
       shortName: "Du",
-      color: "#ffd33f",
+      color: KART_COLORS[selectedKartColor].css,
       x: p.x,
       z: p.z,
       previousX: p.x,
@@ -944,6 +1038,7 @@
     ];
     cars = [player, ...bots];
     ensureKartMeshes();
+    applyPlayerKartColor(selectedKartColor);
     syncKartMeshes(0);
     updateRaceDistances();
     updateHud();
@@ -1017,7 +1112,7 @@
     updateDust(dt);
     updateRaceDistances();
 
-    if (cars.every((car) => car.finishTime !== null)) showResults();
+    if (player.finishTime !== null) showResults();
   }
 
   function updatePlayer(dt) {
@@ -1108,24 +1203,24 @@
 
   function updatePlayerLap() {
     if (player.finishTime !== null) return;
-    const gate = track.gates[player.nextGate];
-    if (!crossedGateForward(player, gate)) return;
+    const finishGate = track.gates[0];
+    const minimumProgress = (player.lap + 0.82) * track.length;
+    if (player.liveDistance < minimumProgress) return;
+    if (!crossedGateForward(player, finishGate, TRACK_HALF + 1.2)) return;
 
-    player.lastGate = player.nextGate;
-    if (player.nextGate === 0) {
-      player.lap += 1;
-      const lapTime = raceTime - player.lapStartTime;
-      player.lapTimes.push(lapTime);
-      player.lapStartTime = raceTime;
-      if (player.lap >= LAPS_TO_WIN) {
-        player.finishTime = raceTime;
-        player.speed *= 0.72;
-        showToast("Ziel! Die Gegner beenden noch ihre Runde.");
-      } else {
-        showToast(`Runde ${player.lap} geschafft · ${formatTime(lapTime)}`);
-      }
+    player.lastGate = 0;
+    player.nextGate = 0;
+    player.lap += 1;
+    const lapTime = raceTime - player.lapStartTime;
+    player.lapTimes.push(lapTime);
+    player.lapStartTime = raceTime;
+    if (player.lap >= LAPS_TO_WIN) {
+      player.finishTime = raceTime;
+      player.speed *= 0.72;
+      showToast("Ziel! Rennergebnis wird ausgewertet.");
+    } else {
+      showToast(`Runde ${player.lap} geschafft · ${formatTime(lapTime)}`);
     }
-    player.nextGate = (player.nextGate + 1) % GATE_COUNT;
   }
 
   function updatePlayerLiveProgress() {
@@ -1142,7 +1237,7 @@
     player.lastProjectionS = projectedS;
   }
 
-  function crossedGateForward(car, gate) {
+  function crossedGateForward(car, gate, maxLateral = TRACK_HALF * 0.95) {
     const oldDX = car.previousX - gate.x;
     const oldDZ = car.previousZ - gate.z;
     const newDX = car.x - gate.x;
@@ -1154,7 +1249,7 @@
     const hitX = lerp(car.previousX, car.x, mix);
     const hitZ = lerp(car.previousZ, car.z, mix);
     const lateral = (hitX - gate.x) * gate.nx + (hitZ - gate.z) * gate.nz;
-    return Math.abs(lateral) <= TRACK_HALF * 0.95;
+    return Math.abs(lateral) <= maxLateral;
   }
 
   function updateBot(bot, dt) {
@@ -1252,6 +1347,7 @@
   }
 
   function showResults() {
+    if (phase === "results") return;
     phase = "results";
     clearControls();
     touchControls.hidden = true;
@@ -1262,19 +1358,22 @@
     resultEyebrow.textContent = rank === 1 ? "SIEG IM MINI KART CUP 3D" : "RENNEN BEENDET";
     resultTitle.textContent = titles[rank - 1];
     resultTime.textContent = formatTime(player.finishTime);
+    const bestPlayerLap = Math.min(...player.lapTimes);
+    resultBestLapTime.textContent = formatTime(bestPlayerLap);
     resultRows.innerHTML = ranking.map((car, index) => {
-      const bestLap = Math.min(...car.lapTimes);
+      const bestLap = car.lapTimes.length ? Math.min(...car.lapTimes) : null;
+      const totalText = car.finishTime === null ? "Noch unterwegs" : formatTime(car.finishTime);
+      const bestLapText = bestLap === null ? "—" : formatTime(bestLap);
       return `
         <tr class="${car.id === "player" ? "is-player" : ""}">
           <td>${index + 1}.</td>
           <td><span class="driver-name"><i style="background:${car.color}"></i>${car.name}</span></td>
-          <td>${formatTime(car.finishTime)}</td>
-          <td>${formatTime(bestLap)}</td>
+          <td>${totalText}</td>
+          <td>${bestLapText}</td>
           <td>${Math.round(averageSpeed(car))} km/h</td>
         </tr>`;
     }).join("");
 
-    const bestPlayerLap = Math.min(...player.lapTimes);
     lapSummary.innerHTML = player.lapTimes.map((lap, index) => `
       <div class="lap-pill ${lap === bestPlayerLap ? "is-best" : ""}">
         Runde ${index + 1}<strong>${formatTime(lap)}</strong>
@@ -1285,8 +1384,10 @@
   }
 
   function averageSpeed(car) {
-    const meters = LAPS_TO_WIN * track.length * METERS_PER_UNIT;
-    return car.finishTime > 0 ? meters / car.finishTime * 3.6 : 0;
+    const finished = car.finishTime !== null;
+    const meters = (finished ? LAPS_TO_WIN * track.length : car.raceDistance) * METERS_PER_UNIT;
+    const seconds = finished ? car.finishTime : raceTime;
+    return seconds > 0 ? meters / seconds * 3.6 : 0;
   }
 
   function syncKartMeshes(dt) {
@@ -1449,6 +1550,11 @@
     startButton.addEventListener("click", () => startRace());
     restartButton.addEventListener("click", () => startRace());
     menuButton.addEventListener("click", showMenu);
+    kartColorInputs.forEach((input) => {
+      input.addEventListener("change", () => {
+        if (input.checked) applyPlayerKartColor(input.value);
+      });
+    });
     window.addEventListener("resize", resizeRenderer, { passive: true });
     window.addEventListener("blur", clearControls);
     document.addEventListener("visibilitychange", () => {
@@ -1465,14 +1571,11 @@
 
     window.addEventListener("keydown", (event) => {
       const control = keyForEvent(event.code);
-      if (control) {
+      if (control && (phase === "racing" || phase === "countdown")) {
         controls[control] = true;
         event.preventDefault();
       }
-      if (event.code === "Enter" && phase === "menu") {
-        startRace();
-        event.preventDefault();
-      } else if ((event.code === "Enter" || event.code === "KeyR") && phase === "results") {
+      if (event.code === "KeyR" && phase === "results") {
         startRace();
         event.preventDefault();
       }
@@ -1480,7 +1583,7 @@
 
     window.addEventListener("keyup", (event) => {
       const control = keyForEvent(event.code);
-      if (control) {
+      if (control && (phase === "racing" || phase === "countdown")) {
         controls[control] = false;
         event.preventDefault();
       }

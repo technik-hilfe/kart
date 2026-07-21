@@ -422,7 +422,7 @@ kbd {
 }
 
 .driver-chip:nth-child(3) i { background: var(--cyan); }
-.driver-chip.player-chip i { background: var(--yellow); }
+.driver-chip.player-chip > i { background: var(--player-kart-color, #2f7df6); }
 
 .driver-chip small {
   display: block;
@@ -430,6 +430,80 @@ kbd {
   color: #8295a2;
   font-size: 7px;
   letter-spacing: 0.11em;
+}
+
+.kart-color-picker {
+  min-width: 0;
+  margin: 0 0 14px;
+  padding: 0;
+  border: 0;
+}
+
+.kart-color-picker legend {
+  margin-bottom: 6px;
+  color: #91a2ae;
+  font-size: 8px;
+  font-weight: 1000;
+  letter-spacing: 0.13em;
+}
+
+.kart-color-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+
+.kart-color-option {
+  position: relative;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.kart-color-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.kart-color-option > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  color: #cbd5db;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 9px;
+  font-weight: 900;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.kart-color-option i {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--kart-color);
+  box-shadow: inset 0 -3px rgba(0, 0, 0, 0.18), 0 2px 5px rgba(0, 0, 0, 0.22);
+}
+
+.kart-color-option:hover > span {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.kart-color-option input:checked + span {
+  border-color: var(--kart-color);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.11);
+  box-shadow: inset 0 0 0 1px var(--kart-color), 0 0 14px rgba(255, 255, 255, 0.07);
+}
+
+.kart-color-option input:focus-visible + span {
+  outline: 3px solid rgba(255, 255, 255, 0.75);
+  outline-offset: 2px;
 }
 
 .start-controls {
@@ -572,6 +646,39 @@ kbd {
   font-size: clamp(28px, 4.3vw, 45px);
   font-weight: 1000;
   letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.result-highlights {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin: 12px 0 16px;
+}
+
+.result-highlights > div {
+  padding: 10px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  background: rgba(3, 10, 15, 0.2);
+  text-align: left;
+}
+
+.result-highlights span {
+  display: block;
+  margin-bottom: 2px;
+  color: #8fa0ab;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.result-highlights strong {
+  color: var(--yellow);
+  font-size: clamp(20px, 3vw, 31px);
+  font-weight: 1000;
+  letter-spacing: -0.035em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -743,6 +850,9 @@ kbd {
   .driver-preview { margin-bottom: 9px; }
   .driver-chip { padding: 5px; font-size: 8px; }
   .driver-chip i { height: 20px; }
+  .kart-color-picker { margin-bottom: 9px; }
+  .kart-color-option > span { min-height: 29px; font-size: 8px; }
+  .kart-color-option i { width: 10px; height: 10px; }
   .start-controls { margin-bottom: 10px; padding: 6px 9px; }
   .primary-button, .secondary-button { min-height: 36px; font-size: 11px; }
   .flag-mark { top: 17px; right: 22px; transform: scale(0.8) rotate(7deg); }
@@ -751,8 +861,9 @@ kbd {
   .result-badge { top: -18px; width: 38px; height: 38px; border-width: 3px; font-size: 17px; }
   .result-card .eyebrow { margin-top: 7px; margin-bottom: 3px; }
   .result-card h2 { font-size: 25px; }
-  .result-lead { margin-top: 5px; }
-  .hero-time { margin-bottom: 8px; font-size: 27px; }
+  .result-highlights { gap: 6px; margin: 7px 0 8px; }
+  .result-highlights > div { padding: 6px 9px; }
+  .result-highlights strong { font-size: 20px; }
   .result-table th { padding: 5px 7px; }
   .result-table td { padding: 6px 7px; font-size: 9px; }
   .lap-summary { margin-top: 6px; }
@@ -764,8 +875,8 @@ kbd {
 @media (max-width: 520px) {
   .screen-overlay { padding: 10px; }
   .driver-chip span { overflow: hidden; text-overflow: ellipsis; }
-  .result-table th:nth-child(4),
-  .result-table td:nth-child(4) { display: none; }
+  .result-table th:nth-child(5),
+  .result-table td:nth-child(5) { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

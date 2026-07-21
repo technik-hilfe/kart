@@ -69,10 +69,32 @@
         <p class="intro-copy">Steig ins Kart, meistere die Kurven und hänge beide Bots in drei Runden ab.</p>
 
         <div class="driver-preview" aria-label="Teilnehmer">
-          <div class="driver-chip player-chip"><i></i><span><small>DU</small>Sunny</span></div>
+          <div class="driver-chip player-chip"><i id="playerColorMarker"></i><span><small>DU</small>Sunny</span></div>
           <div class="driver-chip"><i></i><span><small>BOT 1</small>Turbo Tom</span></div>
           <div class="driver-chip"><i></i><span><small>BOT 2</small>Kurven-Kim</span></div>
         </div>
+
+        <fieldset class="kart-color-picker">
+          <legend>DEINE KARTFARBE</legend>
+          <div class="kart-color-options">
+            <label class="kart-color-option" style="--kart-color:#2f7df6">
+              <input type="radio" name="kartColor" value="blue" checked>
+              <span><i aria-hidden="true"></i>Blau</span>
+            </label>
+            <label class="kart-color-option" style="--kart-color:#f0605f">
+              <input type="radio" name="kartColor" value="red">
+              <span><i aria-hidden="true"></i>Rot</span>
+            </label>
+            <label class="kart-color-option" style="--kart-color:#ffd33f">
+              <input type="radio" name="kartColor" value="yellow">
+              <span><i aria-hidden="true"></i>Gelb</span>
+            </label>
+            <label class="kart-color-option" style="--kart-color:#3cbe6b">
+              <input type="radio" name="kartColor" value="green">
+              <span><i aria-hidden="true"></i>Grün</span>
+            </label>
+          </div>
+        </fieldset>
 
         <div class="start-controls">
           <span class="key-cluster" aria-hidden="true"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
@@ -91,8 +113,16 @@
         <div class="result-badge" id="resultBadge">1</div>
         <p class="eyebrow" id="resultEyebrow">RENNEN BEENDET</p>
         <h2 id="resultTitle">Stark gefahren!</h2>
-        <p class="result-lead">Deine Gesamtzeit</p>
-        <strong class="hero-time" id="resultTime">00:00.000</strong>
+        <div class="result-highlights" aria-label="Dein Rennergebnis">
+          <div>
+            <span>Gesamtzeit</span>
+            <strong id="resultTime">00:00.000</strong>
+          </div>
+          <div>
+            <span>Beste Rundenzeit</span>
+            <strong id="resultBestLapTime">00:00.000</strong>
+          </div>
+        </div>
 
         <div class="result-table-wrap">
           <table class="result-table">
