@@ -1,0 +1,17 @@
+Spa-Francorchamps track layout attribution
+==========================================
+
+The TRACK_4_POINTS data in game.js is adapted from:
+
+  "Spa-Francorchamps of Belgium.svg" by Will Pittenger
+  https://commons.wikimedia.org/wiki/File:Spa-Francorchamps_of_Belgium.svg
+
+Source license: Creative Commons Attribution-ShareAlike 3.0 Unported
+https://creativecommons.org/licenses/by-sa/3.0/
+
+Changes made on 2026-07-21:
+The circuit centerline was sampled, recentered, rescaled, simplified and
+smoothed for use as a driveable kart-game track.
+
+The adapted TRACK_4_POINTS data is provided under CC BY-SA 3.0. This notice
+applies to that track-layout data only; Three.js retains its own license.

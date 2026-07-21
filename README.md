@@ -30,5 +30,6 @@ Auf Touch-Geraeten werden Bildschirmtasten eingeblendet.
 - `index.html` - Spielseite und Benutzeroberflaeche
 - `styles.css` - Gestaltung und responsive Darstellung
 - `game.js` - Strecke, Fahrphysik, Bots, Rennen und 3D-Welt
+- `SPA-TRACK-ATTRIBUTION.txt` - Quelle und Lizenzhinweis fuer Strecke 4
 - `three.min.js` - lokale Three.js-Laufzeit
 - `THREE-LICENSE.txt` - Lizenzhinweis zu Three.js
