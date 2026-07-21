@@ -253,6 +253,12 @@ canvas {
   font-variant-numeric: tabular-nums;
 }
 
+.standing-row > span:not(.standing-rank) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .speed-card {
   right: 18px;
   bottom: 18px;
@@ -407,7 +413,12 @@ kbd {
 }
 
 .start-card {
-  padding: 29px 34px 27px;
+  width: min(96vw, 760px);
+  max-height: calc(100dvh - 28px);
+  overflow-y: auto;
+  padding: 24px 30px 23px;
+  touch-action: pan-y;
+  scrollbar-width: thin;
 }
 
 .eyebrow {
@@ -489,11 +500,10 @@ kbd {
   width: 11px;
   height: 28px;
   border-radius: 5px;
-  background: var(--red);
+  background: var(--driver-color, var(--red));
   box-shadow: inset 0 -5px rgba(0, 0, 0, 0.12), 0 3px 7px rgba(0, 0, 0, 0.2);
 }
 
-.driver-chip:nth-child(3) i { background: var(--cyan); }
 .driver-chip.player-chip > i { background: var(--player-kart-color, #2f7df6); }
 
 .driver-chip small {
@@ -502,6 +512,97 @@ kbd {
   color: #8295a2;
   font-size: 7px;
   letter-spacing: 0.11em;
+}
+
+.race-setup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 13px;
+}
+
+.menu-picker {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.menu-picker legend {
+  margin-bottom: 6px;
+  color: #91a2ae;
+  font-size: 8px;
+  font-weight: 1000;
+  letter-spacing: 0.13em;
+}
+
+.menu-option-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.menu-option {
+  position: relative;
+  min-width: 0;
+  cursor: pointer;
+  --option-color: var(--cyan);
+}
+
+.difficulty-easy { --option-color: #64dc8c; }
+.difficulty-medium { --option-color: var(--yellow); }
+.difficulty-hard { --option-color: var(--red); }
+
+.menu-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.menu-option > span {
+  display: grid;
+  place-items: center;
+  min-height: 42px;
+  padding: 5px 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  color: #d5dde2;
+  background: rgba(255, 255, 255, 0.04);
+  text-align: center;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.menu-option strong,
+.menu-option small {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-option strong { font-size: 10px; }
+.menu-option small { color: #899ba7; font-size: 7px; }
+
+.menu-option:hover > span {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.menu-option input:checked + span {
+  border-color: var(--option-color);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.11);
+  box-shadow: inset 0 0 0 1px var(--option-color);
+}
+
+.menu-option input:checked + span small { color: #dbe4e9; }
+
+.menu-option input:focus-visible + span {
+  outline: 3px solid rgba(255, 255, 255, 0.75);
+  outline-offset: 2px;
 }
 
 .kart-color-picker {
@@ -668,8 +769,12 @@ kbd {
 
 .result-card {
   width: min(96vw, 720px);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
   padding: 27px 31px 24px;
   text-align: center;
+  touch-action: pan-y;
+  scrollbar-width: thin;
 }
 
 .result-badge {
@@ -755,10 +860,11 @@ kbd {
 }
 
 .result-table-wrap {
-  overflow: hidden;
+  overflow-x: auto;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 13px;
   background: rgba(3, 10, 15, 0.2);
+  touch-action: pan-x;
 }
 
 .result-table {
@@ -946,12 +1052,17 @@ kbd {
   .speed-card { right: 8px; bottom: 8px; min-width: 123px; gap: 7px; }
   .speed-track { width: 35px; }
   .controls-hint { left: 9px; bottom: 8px; }
-  .start-card { width: min(88vw, 480px); padding: 18px 25px 17px; border-radius: 19px; }
+  .start-card { width: min(96vw, 700px); padding: 16px 20px 15px; border-radius: 19px; }
   .start-card h1 { font-size: 43px; }
   .intro-copy { margin: 10px 0 11px; font-size: 10px; }
   .driver-preview { margin-bottom: 9px; }
   .driver-chip { padding: 5px; font-size: 8px; }
   .driver-chip i { height: 20px; }
+  .race-setup-grid { gap: 8px; margin-bottom: 9px; }
+  .menu-option-grid { gap: 4px; }
+  .menu-option > span { min-height: 34px; padding: 3px; }
+  .menu-option strong { font-size: 8px; }
+  .menu-option small { font-size: 6px; }
   .kart-color-picker { margin-bottom: 9px; }
   .kart-color-option > span { min-height: 29px; font-size: 8px; }
   .kart-color-option i { width: 10px; height: 10px; }

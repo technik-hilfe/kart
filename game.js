@@ -29,6 +29,8 @@
   const lapSummary = document.getElementById("lapSummary");
   const playerColorMarker = document.getElementById("playerColorMarker");
   const kartColorInputs = [...document.querySelectorAll('input[name="kartColor"]')];
+  const trackChoiceInputs = [...document.querySelectorAll('input[name="trackChoice"]')];
+  const difficultyInputs = [...document.querySelectorAll('input[name="difficulty"]')];
 
   if (!THREE) {
     showFatalError("Die lokale 3D-Laufzeit konnte nicht geladen werden.");
@@ -37,9 +39,7 @@
 
   const TRACK_WIDTH = 7.8;
   const TRACK_HALF = TRACK_WIDTH / 2;
-  // A deliberately over-the-top technical layout: about 600 units per lap,
-  // packed into a compact area with six hairpins and constant switchbacks.
-  const TRACK_SCALE = 0.90;
+  // All three layouts use the same road width and race rules.
   const TRACK_SAMPLES = 2520;
   const GATE_COUNT = 96;
   const LAPS_TO_WIN = 3;
@@ -53,9 +53,11 @@
     green: { body: 0x3cbe6b, accent: 0xcaffd9, css: "#3cbe6b" }
   });
   let selectedKartColor = kartColorInputs.find((input) => input.checked)?.value || "blue";
+  let selectedTrackId = trackChoiceInputs.find((input) => input.checked)?.value || "track1";
+  let selectedDifficulty = difficultyInputs.find((input) => input.checked)?.value || "medium";
 
   const controls = { up: false, down: false, left: false, right: false };
-  const controlPoints = [
+  const TRACK_1_POINTS = [
     [-70, -22],
     [-70, -42],
     [-68.928, -46],
@@ -171,6 +173,46 @@
     [-70, -7]
   ];
 
+  const TRACK_2_POINTS = [
+    [0, -61.916], [15.373, -67.449], [34.867, -74.570], [55.837, -76.153],
+    [71.469, -68.358], [76.656, -53.269], [73.131, -36.923], [69.213, -24.507],
+    [73.873, -16.680], [89.621, -9.864], [109.928, 0], [123.463, 13.589],
+    [122.037, 27.555], [106.202, 37.604], [84.285, 42.555], [65.846, 45.758],
+    [54.815, 52.429], [47.640, 64.974], [37.500, 80.202], [20.733, 90.966],
+    [0, 91.187], [-18.331, 80.429], [-30.115, 64.409], [-37.379, 50.980],
+    [-46.711, 44.677], [-63.283, 43.976], [-85.570, 43.203], [-105.438, 37.333],
+    [-113.933, 25.725], [-108.300, 11.920], [-94.552, 0], [-83.307, -9.169],
+    [-81.978, -18.510], [-89.351, -31.637], [-96.725, -48.835], [-94.595, -65.735],
+    [-79.573, -76.110], [-56.226, -76.684], [-32.749, -70.040], [-14.373, -63.061]
+  ];
+
+  const TRACK_3_POINTS = [
+    [-70, -53.5], [-48, -54], [-18, -43], [8, -32], [34, -46],
+    [75, -52], [108, -38], [122, -12], [118, 18], [98, 42],
+    [65, 55], [32, 54], [8, 40], [-10, 30], [-32, 44],
+    [-62, 56], [-96, 46], [-118, 20], [-120, -35], [-100, -47]
+  ];
+
+  const TRACK_DEFINITIONS = Object.freeze({
+    track1: Object.freeze({ id: "track1", name: "Serpentinen", scale: 0.90, points: TRACK_1_POINTS }),
+    track2: Object.freeze({ id: "track2", name: "Bergwald-Ring", scale: 0.88, points: TRACK_2_POINTS }),
+    track3: Object.freeze({ id: "track3", name: "Fichten-Speedway", scale: 1.0, points: TRACK_3_POINTS })
+  });
+
+  const BOT_PROFILES = Object.freeze([
+    { id: "tom", name: "Turbo Tom", shortName: "Tom", body: 0xff7836, accent: 0xffe0bd, color: "#ff7836", speedBias: 0.9, cornerBias: -0.4, accelBias: 0.6, seed: 1.8 },
+    { id: "kim", name: "Kurven-Kim", shortName: "Kim", body: 0x28cad8, accent: 0xd8fbff, color: "#28cad8", speedBias: -0.4, cornerBias: 0.9, accelBias: 0, seed: 4.4 },
+    { id: "nia", name: "Nitro Nia", shortName: "Nia", body: 0x9b72ff, accent: 0xe8ddff, color: "#9b72ff", speedBias: 0.55, cornerBias: 0.1, accelBias: 0.25, seed: 7.2 },
+    { id: "dina", name: "Drift-Dina", shortName: "Dina", body: 0xff58a5, accent: 0xffd9eb, color: "#ff58a5", speedBias: -0.15, cornerBias: 0.65, accelBias: -0.1, seed: 10.6 },
+    { id: "ben", name: "Blitz-Ben", shortName: "Ben", body: 0xe5ebf1, accent: 0xffffff, color: "#e5ebf1", speedBias: 0.2, cornerBias: 0.35, accelBias: 0.4, seed: 13.1 }
+  ]);
+
+  const DIFFICULTIES = Object.freeze({
+    easy: Object.freeze({ baseTop: 14.8, minCorner: 8.5, acceleration: 6.4, braking: 9.5, apex: 0.2, rhythm: 0.6, lift: 0.12 }),
+    medium: Object.freeze({ baseTop: 17.2, minCorner: 11.0, acceleration: 8.4, braking: 13.5, apex: 0.75, rhythm: 0.3, lift: 0.04 }),
+    hard: Object.freeze({ baseTop: 20.7, minCorner: 14.2, acceleration: 12.4, braking: 17.0, apex: 1.65, rhythm: 0.1, lift: 0 })
+  });
+
   let renderer;
   try {
     renderer = new THREE.WebGLRenderer({
@@ -199,12 +241,13 @@
   const cameraLook = new THREE.Vector3();
   let cameraReady = false;
 
-  const track = buildTrack();
-  const world = new THREE.Group();
+  let track = buildTrack(TRACK_DEFINITIONS[selectedTrackId]);
+  let world = new THREE.Group();
   scene.add(world);
-  const scenery = buildWorld();
-  const dust = buildDustSystem();
+  let scenery = buildWorld();
+  let dust = buildDustSystem();
   const kartMeshes = new Map();
+  let activeTrackId = selectedTrackId;
 
   let phase = "menu";
   let player;
@@ -221,8 +264,10 @@
   let debugTimeScale = 1;
   let resizeObserver;
 
-  function buildTrack() {
-    const curvePoints = controlPoints.map(([x, z]) => new THREE.Vector3(x * TRACK_SCALE, 0, z * TRACK_SCALE));
+  function buildTrack(definition) {
+    const curvePoints = definition.points.map(([x, z]) => (
+      new THREE.Vector3(x * definition.scale, 0, z * definition.scale)
+    ));
     const curve = new THREE.CatmullRomCurve3(curvePoints, true, "centripetal", 0.5);
     curve.arcLengthDivisions = 2200;
     const length = curve.getLength();
@@ -241,7 +286,7 @@
       node.nz = node.tx;
     });
 
-    const model = { curve, length, step, nodes, gates: [], roadGeometry: null };
+    const model = { curve, length, step, nodes, gates: [], roadGeometry: null, definition };
     for (let index = 0; index < GATE_COUNT; index += 1) {
       const p = sampleTrack(model, index * length / GATE_COUNT);
       model.gates.push({
@@ -342,13 +387,13 @@
 
   function buildWorld() {
     const hemi = new THREE.HemisphereLight(0xdaf4ff, 0x3f6b3c, 2.2);
-    scene.add(hemi);
+    world.add(hemi);
 
     const sun = new THREE.DirectionalLight(0xfff0cb, 3.25);
     sun.position.set(-32, 45, -28);
     const sunTarget = new THREE.Object3D();
     sun.target = sunTarget;
-    scene.add(sunTarget);
+    world.add(sunTarget);
     sun.castShadow = true;
     sun.shadow.mapSize.set(1024, 1024);
     sun.shadow.camera.left = -34;
@@ -358,7 +403,7 @@
     sun.shadow.camera.near = 8;
     sun.shadow.camera.far = 100;
     sun.shadow.bias = -0.00045;
-    scene.add(sun);
+    world.add(sun);
 
     const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x61a94f, roughness: 1, flatShading: true });
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(420, 300, 34, 26), groundMaterial);
@@ -745,7 +790,7 @@
     });
     const points = new THREE.Points(geometry, material);
     points.frustumCulled = false;
-    scene.add(points);
+    world.add(points);
     return { particles: [], positions, geometry, points };
   }
 
@@ -887,11 +932,15 @@
   }
 
   function ensureKartMeshes() {
-    if (kartMeshes.size) return;
     const playerPaint = KART_COLORS[selectedKartColor];
-    kartMeshes.set("player", createKartMesh(playerPaint.body, playerPaint.accent, true));
-    kartMeshes.set("tom", createKartMesh(0xf0605f, 0xffdfd8));
-    kartMeshes.set("kim", createKartMesh(0x42c5d4, 0xdcfbff));
+    if (!kartMeshes.has("player")) {
+      kartMeshes.set("player", createKartMesh(playerPaint.body, playerPaint.accent, true));
+    }
+    BOT_PROFILES.forEach((profile) => {
+      if (!kartMeshes.has(profile.id)) {
+        kartMeshes.set(profile.id, createKartMesh(profile.body, profile.accent));
+      }
+    });
   }
 
   function applyPlayerKartColor(colorName) {
@@ -911,7 +960,7 @@
 
   function createPlayer() {
     const startDistance = -2.7;
-    const p = pointAtDistance(startDistance, 0);
+    const p = pointAtDistance(startDistance, -1.3);
     return {
       id: "player",
       name: "Sunny (Du)",
@@ -938,18 +987,19 @@
       liveDistance: 0,
       lastProjectionS: projectToTrack(p.x, p.z).s,
       maxRecordedSpeed: 0,
+      contactCooldown: 0,
       autoPilot: false,
       autoDistance: startDistance
     };
   }
 
-  function createBot(id, name, color, startDistance, lane, topSpeed, seed) {
+  function createBot(profile, startDistance, lane, difficulty) {
     const p = pointAtDistance(startDistance, lane);
     return {
-      id,
-      name,
-      shortName: name.split(" ")[0],
-      color,
+      id: profile.id,
+      name: profile.name,
+      shortName: profile.shortName,
+      color: profile.color,
       x: p.x,
       z: p.z,
       previousX: p.x,
@@ -957,9 +1007,17 @@
       angle: Math.atan2(p.tx, p.tz),
       speed: 0,
       distance: startDistance,
-      lane,
-      topSpeed,
-      seed,
+      baseLane: lane,
+      currentLane: lane,
+      topSpeed: difficulty.baseTop + profile.speedBias,
+      minCornerSpeed: difficulty.minCorner + profile.cornerBias,
+      acceleration: difficulty.acceleration + profile.accelBias,
+      braking: difficulty.braking,
+      apex: difficulty.apex,
+      rhythm: difficulty.rhythm,
+      lift: difficulty.lift,
+      laneWobble: difficulty === DIFFICULTIES.hard ? 0.035 : difficulty === DIFFICULTIES.medium ? 0.1 : 0.19,
+      seed: profile.seed,
       steerVisual: 0,
       lap: 0,
       lapStartTime: 0,
@@ -970,6 +1028,56 @@
     };
   }
 
+  function destroyTrackWorld() {
+    if (!world) return;
+    const geometries = new Set();
+    const materials = new Set();
+    const textures = new Set();
+    world.traverse((object) => {
+      if (object.geometry && !geometries.has(object.geometry)) {
+        geometries.add(object.geometry);
+        object.geometry.dispose();
+      }
+      const objectMaterials = Array.isArray(object.material) ? object.material : [object.material];
+      objectMaterials.filter(Boolean).forEach((material) => {
+        if (materials.has(material)) return;
+        materials.add(material);
+        Object.values(material).forEach((value) => {
+          if (value?.isTexture && !textures.has(value)) {
+            textures.add(value);
+            value.dispose();
+          }
+        });
+        material.dispose();
+      });
+    });
+    kartMeshes.clear();
+    scene.remove(world);
+    world.clear();
+    renderer.renderLists?.dispose();
+  }
+
+  function activateTrack(trackId) {
+    const definition = TRACK_DEFINITIONS[trackId] || TRACK_DEFINITIONS.track1;
+    selectedTrackId = definition.id;
+    trackChoiceInputs.forEach((input) => { input.checked = input.value === selectedTrackId; });
+    if (activeTrackId === selectedTrackId && track && world) return false;
+
+    clearControls();
+    window.clearTimeout(countdownHideTimer);
+    window.clearTimeout(toastTimer);
+    destroyTrackWorld();
+    track = buildTrack(definition);
+    world = new THREE.Group();
+    scene.add(world);
+    scenery = buildWorld();
+    dust = buildDustSystem();
+    activeTrackId = selectedTrackId;
+    cameraReady = false;
+    resetRace();
+    return true;
+  }
+
   function resetRace() {
     clearControls();
     dust.particles.length = 0;
@@ -978,10 +1086,17 @@
     accumulator = 0;
     debugTimeScale = 1;
     player = createPlayer();
-    bots = [
-      createBot("tom", "Turbo Tom", "#f0605f", -5.0, -1.25, 17.25, 1.8),
-      createBot("kim", "Kurven-Kim", "#42c5d4", -7.4, 1.25, 16.65, 4.4)
+    const difficulty = DIFFICULTIES[selectedDifficulty] || DIFFICULTIES.medium;
+    const gridSlots = [
+      { distance: -2.7, lane: 1.3 },
+      { distance: -5.6, lane: -1.3 },
+      { distance: -5.6, lane: 1.3 },
+      { distance: -8.5, lane: -1.3 },
+      { distance: -8.5, lane: 1.3 }
     ];
+    bots = BOT_PROFILES.map((profile, index) => (
+      createBot(profile, gridSlots[index].distance, gridSlots[index].lane, difficulty)
+    ));
     cars = [player, ...bots];
     ensureKartMeshes();
     applyPlayerKartColor(selectedKartColor);
@@ -992,7 +1107,7 @@
 
   function startRace(options = {}) {
     window.clearTimeout(countdownHideTimer);
-    resetRace();
+    if (!activateTrack(selectedTrackId)) resetRace();
     if (options.autoPilot) {
       player.autoPilot = true;
       debugTimeScale = clamp(Number(options.timeScale) || 1, 1, 12);
@@ -1054,7 +1169,7 @@
     if (player.autoPilot) updateAutoPlayer(dt);
     else updatePlayer(dt);
     bots.forEach((bot) => updateBot(bot, dt));
-    resolvePlayerBotContacts();
+    resolvePlayerBotContacts(dt);
     updateDust(dt);
     updateRaceDistances();
 
@@ -1201,17 +1316,30 @@
   function updateBot(bot, dt) {
     bot.previousX = bot.x;
     bot.previousZ = bot.z;
+    let turn = 0;
+    let severity = 0;
 
     if (bot.finishTime !== null) {
       bot.speed *= Math.exp(-1.7 * dt);
       bot.distance += bot.speed * dt;
     } else {
-      const near = pointAtDistance(bot.distance + 2.0);
-      const far = pointAtDistance(bot.distance + 9.2);
-      const curve = Math.abs(angleDifference(Math.atan2(far.tx, far.tz), Math.atan2(near.tx, near.tz)));
-      const rhythm = Math.sin(raceTime * 0.72 + bot.seed) * 0.25 + Math.sin(bot.distance * 0.19 + bot.seed) * 0.22;
-      const targetSpeed = clamp(bot.topSpeed - curve * 6.5 + rhythm, 11.4, bot.topSpeed + 0.2);
-      const change = targetSpeed > bot.speed ? 8.1 : 13.5;
+      const near = pointAtDistance(bot.distance + 2.3);
+      const far = pointAtDistance(bot.distance + 10.5);
+      turn = angleDifference(Math.atan2(far.tx, far.tz), Math.atan2(near.tx, near.tz));
+      severity = clamp(Math.abs(turn) / 1.25, 0, 1);
+      const rhythm = (
+        Math.sin(raceTime * 0.72 + bot.seed)
+        + Math.sin(bot.distance * 0.19 + bot.seed) * 0.7
+      ) * bot.rhythm;
+      const lift = bot.lift > 0 && Math.sin(bot.distance * 0.115 + bot.seed * 2.1) > 0.86
+        ? bot.topSpeed * bot.lift
+        : 0;
+      const targetSpeed = clamp(
+        lerp(bot.topSpeed, bot.minCornerSpeed, Math.pow(severity, 0.82)) + rhythm - lift,
+        bot.minCornerSpeed * 0.9,
+        bot.topSpeed + 0.25
+      );
+      const change = targetSpeed > bot.speed ? bot.acceleration : bot.braking;
       bot.speed += clamp(targetSpeed - bot.speed, -change * dt, change * dt);
       bot.distance += bot.speed * dt;
       bot.maxRecordedSpeed = Math.max(bot.maxRecordedSpeed, bot.speed);
@@ -1224,8 +1352,14 @@
       }
     }
 
-    const laneWobble = Math.sin(bot.distance * 0.15 + bot.seed) * 0.13;
-    const p = pointAtDistance(bot.distance, bot.lane + laneWobble);
+    const desiredLane = clamp(
+      bot.baseLane * 0.35 - Math.sign(turn || 0) * bot.apex * severity,
+      -TRACK_HALF + 1.05,
+      TRACK_HALF - 1.05
+    );
+    bot.currentLane += (desiredLane - bot.currentLane) * (1 - Math.exp(-3.8 * dt));
+    const laneWobble = Math.sin(bot.distance * 0.15 + bot.seed) * bot.laneWobble;
+    const p = pointAtDistance(bot.distance, bot.currentLane + laneWobble);
     const nextAngle = Math.atan2(p.tx, p.tz);
     bot.steerVisual += (clamp(angleDifference(nextAngle, bot.angle) * 4.5, -1, 1) - bot.steerVisual) * (1 - Math.exp(-8 * dt));
     bot.x = p.x;
@@ -1250,8 +1384,9 @@
     });
   }
 
-  function resolvePlayerBotContacts() {
+  function resolvePlayerBotContacts(dt) {
     if (player.finishTime !== null) return;
+    player.contactCooldown = Math.max(0, player.contactCooldown - dt);
     bots.forEach((bot) => {
       const dx = player.x - bot.x;
       const dz = player.z - bot.z;
@@ -1260,7 +1395,10 @@
         const overlap = 1.42 - distanceBetween;
         player.x += dx / distanceBetween * overlap * 0.72;
         player.z += dz / distanceBetween * overlap * 0.72;
-        player.speed *= 0.78;
+        if (player.contactCooldown <= 0) {
+          player.speed *= 0.88;
+          player.contactCooldown = 0.22;
+        }
         player.projection = projectToTrack(player.x, player.z);
       }
     });
@@ -1299,10 +1437,16 @@
     touchControls.hidden = true;
     const ranking = getStandings();
     const rank = ranking.indexOf(player) + 1;
-    const titles = ["Du holst den 3D-Pokal!", "Knapp am Sieg vorbei!", "Stark bis ins Ziel!"];
+    const title = rank === 1
+      ? "Du holst den 3D-Pokal!"
+      : rank <= 3
+        ? "Stark auf dem Podium!"
+        : rank <= 5
+          ? "Hart gekämpft bis ins Ziel!"
+          : "Beim nächsten Rennen schlägst du zurück!";
     resultBadge.textContent = `${rank}.`;
     resultEyebrow.textContent = rank === 1 ? "SIEG IM MINI KART CUP 3D" : "RENNEN BEENDET";
-    resultTitle.textContent = titles[rank - 1];
+    resultTitle.textContent = title;
     resultTime.textContent = formatTime(player.finishTime);
     const bestPlayerLap = Math.min(...player.lapTimes);
     resultBestLapTime.textContent = formatTime(bestPlayerLap);
@@ -1547,6 +1691,20 @@
     kartColorInputs.forEach((input) => {
       input.addEventListener("change", () => {
         if (input.checked) applyPlayerKartColor(input.value);
+      });
+    });
+    trackChoiceInputs.forEach((input) => {
+      input.addEventListener("change", () => {
+        if (!input.checked) return;
+        selectedTrackId = input.value;
+        if (phase === "menu") activateTrack(selectedTrackId);
+      });
+    });
+    difficultyInputs.forEach((input) => {
+      input.addEventListener("change", () => {
+        if (!input.checked) return;
+        selectedDifficulty = DIFFICULTIES[input.value] ? input.value : "medium";
+        if (phase === "menu") resetRace();
       });
     });
     window.addEventListener("resize", resizeRenderer, { passive: true });

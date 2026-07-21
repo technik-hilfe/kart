@@ -30,7 +30,7 @@
 
       <div class="hud-card position-card">
         <span class="hud-kicker">POSITION</span>
-        <strong><span id="positionValue">1</span><small> / 3</small></strong>
+        <strong><span id="positionValue">1</span><small> / 6</small></strong>
       </div>
 
       <div class="hud-card time-card">
@@ -81,14 +81,55 @@
         <div class="flag-mark" aria-hidden="true">
           <span></span><span></span><span></span><span></span>
         </div>
-        <p class="eyebrow">ECHTES 3D &nbsp;&bull;&nbsp; 3 RUNDEN &nbsp;&bull;&nbsp; 2 GEGNER</p>
+        <p class="eyebrow">ECHTES 3D &nbsp;&bull;&nbsp; 3 RUNDEN &nbsp;&bull;&nbsp; 5 GEGNER</p>
         <h1>MINI KART<br><em>CUP 3D</em></h1>
-        <p class="intro-copy">Steig ins Kart, meistere die Kurven und hänge beide Bots in drei Runden ab.</p>
+        <p class="intro-copy">Wähle Strecke, Schwierigkeit und Kartfarbe und tritt gegen fünf Bots an.</p>
 
         <div class="driver-preview" aria-label="Teilnehmer">
           <div class="driver-chip player-chip"><i id="playerColorMarker"></i><span><small>DU</small>Sunny</span></div>
-          <div class="driver-chip"><i></i><span><small>BOT 1</small>Turbo Tom</span></div>
-          <div class="driver-chip"><i></i><span><small>BOT 2</small>Kurven-Kim</span></div>
+          <div class="driver-chip" style="--driver-color:#ff7836"><i></i><span><small>BOT 1</small>Turbo Tom</span></div>
+          <div class="driver-chip" style="--driver-color:#28cad8"><i></i><span><small>BOT 2</small>Kurven-Kim</span></div>
+          <div class="driver-chip" style="--driver-color:#9b72ff"><i></i><span><small>BOT 3</small>Nitro Nia</span></div>
+          <div class="driver-chip" style="--driver-color:#ff58a5"><i></i><span><small>BOT 4</small>Drift-Dina</span></div>
+          <div class="driver-chip" style="--driver-color:#e5ebf1"><i></i><span><small>BOT 5</small>Blitz-Ben</span></div>
+        </div>
+
+        <div class="race-setup-grid">
+          <fieldset class="menu-picker track-picker">
+            <legend>STRECKE</legend>
+            <div class="menu-option-grid">
+              <label class="menu-option">
+                <input type="radio" name="trackChoice" value="track1" checked>
+                <span><strong>1</strong><small>Serpentinen</small></span>
+              </label>
+              <label class="menu-option">
+                <input type="radio" name="trackChoice" value="track2">
+                <span><strong>2</strong><small>Bergwald-Ring</small></span>
+              </label>
+              <label class="menu-option">
+                <input type="radio" name="trackChoice" value="track3">
+                <span><strong>3</strong><small>Fichten-Speedway</small></span>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="menu-picker difficulty-picker">
+            <legend>SCHWIERIGKEIT</legend>
+            <div class="menu-option-grid">
+              <label class="menu-option difficulty-easy">
+                <input type="radio" name="difficulty" value="easy">
+                <span><strong>Leicht</strong><small>Entspannt</small></span>
+              </label>
+              <label class="menu-option difficulty-medium">
+                <input type="radio" name="difficulty" value="medium" checked>
+                <span><strong>Mittel</strong><small>Sportlich</small></span>
+              </label>
+              <label class="menu-option difficulty-hard">
+                <input type="radio" name="difficulty" value="hard">
+                <span><strong>Schwer</strong><small>Brutal schnell</small></span>
+              </label>
+            </div>
+          </fieldset>
         </div>
 
         <fieldset class="kart-color-picker">
