@@ -720,11 +720,15 @@
     ];
     for (let index = 0; index < 25; index += 1) {
       const angle = index / 25 * Math.PI * 2;
-      const radius = 154 + random() * 22;
-      const width = 18 + random() * 22;
+      const radius = 178 + random() * 20;
+      const width = 16 + random() * 14;
       const height = 9 + random() * 15;
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius * 0.78;
+      const clearance = projectToTrack(x, z).distance;
+      if (clearance <= TRACK_HALF + width + 7) continue;
       const hill = new THREE.Mesh(new THREE.ConeGeometry(width, height, 7), materials[index % materials.length]);
-      hill.position.set(Math.cos(angle) * radius, height / 2 - 1.2, Math.sin(angle) * radius * 0.78);
+      hill.position.set(x, height / 2 - 1.2, z);
       hill.rotation.y = random() * Math.PI;
       hill.receiveShadow = true;
       world.add(hill);
