@@ -1936,7 +1936,6 @@
       button.addEventListener("pointerdown", press, { passive: false });
       button.addEventListener("pointerup", release, { passive: false });
       button.addEventListener("pointercancel", release, { passive: false });
-      button.addEventListener("lostpointercapture", release, { passive: false });
     });
 
     const releasePointerAnywhere = (event) => {
@@ -1946,22 +1945,14 @@
     window.addEventListener("pointerup", releasePointerAnywhere, { capture: true, passive: false });
     window.addEventListener("pointercancel", releasePointerAnywhere, { capture: true, passive: false });
 
-    gameShell.addEventListener("touchstart", (event) => {
-      if (raceTouchIsLocked() && event.touches.length > 1 && event.cancelable) event.preventDefault();
-    }, { capture: true, passive: false });
-    gameShell.addEventListener("touchmove", preventRaceGesture, { capture: true, passive: false });
     gameShell.addEventListener("touchend", (event) => {
       if (!raceTouchIsLocked()) return;
       if (event.touches.length === 0) clearTouchControls();
     }, { capture: true, passive: true });
     gameShell.addEventListener("touchcancel", clearTouchControls, { capture: true, passive: true });
-    ["gesturestart", "gesturechange"].forEach((eventName) => {
+    ["gesturestart", "gesturechange", "gestureend"].forEach((eventName) => {
       gameShell.addEventListener(eventName, preventRaceGesture, { capture: true, passive: false });
     });
-    gameShell.addEventListener("gestureend", (event) => {
-      preventRaceGesture(event);
-      clearTouchControls();
-    }, { capture: true, passive: false });
     gameShell.addEventListener("dblclick", preventRaceGesture, { capture: true, passive: false });
     gameShell.addEventListener("wheel", (event) => {
       if (event.ctrlKey) preventRaceGesture(event);
