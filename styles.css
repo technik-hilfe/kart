@@ -67,6 +67,15 @@ button {
   isolation: isolate;
 }
 
+.game-shell.touch-locked,
+.game-shell.touch-locked canvas,
+.game-shell.touch-locked .touch-controls,
+.game-shell.touch-locked .touch-controls button {
+  -ms-touch-action: none;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
 .game-shell:fullscreen,
 .game-shell:-webkit-full-screen,
 .game-shell.fullscreen-fallback {
@@ -91,6 +100,12 @@ canvas {
   display: block;
   width: 100%;
   height: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  -ms-touch-action: none;
+  touch-action: none;
 }
 
 .canvas-shade {

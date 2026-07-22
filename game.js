@@ -31,6 +31,7 @@
   const kartColorInputs = [...document.querySelectorAll('input[name="kartColor"]')];
   const trackChoiceInputs = [...document.querySelectorAll('input[name="trackChoice"]')];
   const difficultyInputs = [...document.querySelectorAll('input[name="difficulty"]')];
+  const touchControlButtons = [...document.querySelectorAll("[data-control]")];
 
   if (!THREE) {
     showFatalError("Die lokale 3D-Laufzeit konnte nicht geladen werden.");
@@ -57,6 +58,14 @@
   let selectedDifficulty = difficultyInputs.find((input) => input.checked)?.value || "medium";
 
   const controls = { up: false, down: false, left: false, right: false };
+  const keyboardControls = { up: false, down: false, left: false, right: false };
+  const activeTouchPointers = new Map();
+  const touchPointersByControl = {
+    up: new Set(),
+    down: new Set(),
+    left: new Set(),
+    right: new Set()
+  };
   const TRACK_1_POINTS = [
     [-70, -22],
     [-70, -42],
@@ -1228,6 +1237,7 @@
     countdownLeft = 3.4;
     lastCountdownLabel = "";
     phase = "countdown";
+    gameShell.classList.add("touch-locked");
     setCountdownLabel("3");
     snapChaseCamera();
     canvas.focus();
@@ -1236,6 +1246,8 @@
   function showMenu() {
     window.clearTimeout(countdownHideTimer);
     phase = "menu";
+    gameShell.classList.remove("touch-locked");
+    clearControls();
     resetRace();
     startScreen.hidden = false;
     resultScreen.hidden = true;
@@ -1541,6 +1553,7 @@
   function showResults() {
     if (phase === "results") return;
     phase = "results";
+    gameShell.classList.remove("touch-locked");
     clearControls();
     touchControls.hidden = true;
     const ranking = getStandings();
@@ -1739,9 +1752,56 @@
     return null;
   }
 
+  function syncControlState(control) {
+    const touchActive = touchPointersByControl[control].size > 0;
+    controls[control] = keyboardControls[control] || touchActive;
+    touchControlButtons.forEach((button) => {
+      if (button.dataset.control === control) button.classList.toggle("active", touchActive);
+    });
+  }
+
+  function releaseTouchPointer(pointerId) {
+    const active = activeTouchPointers.get(pointerId);
+    if (!active) return false;
+    activeTouchPointers.delete(pointerId);
+    touchPointersByControl[active.control].delete(pointerId);
+    syncControlState(active.control);
+    try {
+      if (active.button.hasPointerCapture?.(pointerId)) active.button.releasePointerCapture(pointerId);
+    } catch (error) {
+      // Safari can drop pointer capture while it is cancelling a gesture.
+    }
+    return true;
+  }
+
+  function clearTouchControls() {
+    const capturedPointers = [...activeTouchPointers.entries()];
+    activeTouchPointers.clear();
+    Object.keys(touchPointersByControl).forEach((control) => {
+      touchPointersByControl[control].clear();
+      syncControlState(control);
+    });
+    capturedPointers.forEach(([pointerId, active]) => {
+      try {
+        if (active.button.hasPointerCapture?.(pointerId)) active.button.releasePointerCapture(pointerId);
+      } catch (error) {
+        // The browser may already have discarded this capture.
+      }
+    });
+  }
+
   function clearControls() {
-    Object.keys(controls).forEach((key) => { controls[key] = false; });
-    document.querySelectorAll("[data-control].active").forEach((button) => button.classList.remove("active"));
+    Object.keys(keyboardControls).forEach((control) => { keyboardControls[control] = false; });
+    clearTouchControls();
+  }
+
+  function raceTouchIsLocked() {
+    return phase === "racing" || phase === "countdown";
+  }
+
+  function preventRaceGesture(event) {
+    if (!raceTouchIsLocked()) return;
+    if (event.cancelable) event.preventDefault();
   }
 
   function currentFullscreenElement() {
@@ -1817,6 +1877,8 @@
     });
     window.addEventListener("resize", resizeRenderer, { passive: true });
     window.addEventListener("blur", clearControls);
+    window.addEventListener("pagehide", clearControls);
+    window.addEventListener("orientationchange", clearControls, { passive: true });
     document.addEventListener("visibilitychange", () => {
       clearControls();
       lastTimestamp = performance.now();
@@ -1832,7 +1894,8 @@
     window.addEventListener("keydown", (event) => {
       const control = keyForEvent(event.code);
       if (control && (phase === "racing" || phase === "countdown")) {
-        controls[control] = true;
+        keyboardControls[control] = true;
+        syncControlState(control);
         event.preventDefault();
       }
       if (event.code === "KeyR" && phase === "results") {
@@ -1844,29 +1907,65 @@
     window.addEventListener("keyup", (event) => {
       const control = keyForEvent(event.code);
       if (control && (phase === "racing" || phase === "countdown")) {
-        controls[control] = false;
+        keyboardControls[control] = false;
+        syncControlState(control);
         event.preventDefault();
       }
     }, { passive: false });
 
-    document.querySelectorAll("[data-control]").forEach((button) => {
+    touchControlButtons.forEach((button) => {
       const control = button.dataset.control;
       const press = (event) => {
-        event.preventDefault();
-        button.setPointerCapture?.(event.pointerId);
-        controls[control] = true;
-        button.classList.add("active");
+        if (!raceTouchIsLocked()) return;
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        if (event.cancelable) event.preventDefault();
+        releaseTouchPointer(event.pointerId);
+        activeTouchPointers.set(event.pointerId, { control, button });
+        touchPointersByControl[control].add(event.pointerId);
+        syncControlState(control);
+        try {
+          button.setPointerCapture?.(event.pointerId);
+        } catch (error) {
+          // Global release listeners still end the input if capture is unavailable.
+        }
       };
       const release = (event) => {
-        event.preventDefault();
-        controls[control] = false;
-        button.classList.remove("active");
+        const released = releaseTouchPointer(event.pointerId);
+        if (released && event.cancelable) event.preventDefault();
       };
       button.addEventListener("pointerdown", press, { passive: false });
       button.addEventListener("pointerup", release, { passive: false });
       button.addEventListener("pointercancel", release, { passive: false });
       button.addEventListener("lostpointercapture", release, { passive: false });
     });
+
+    const releasePointerAnywhere = (event) => {
+      const released = releaseTouchPointer(event.pointerId);
+      if (released && event.cancelable) event.preventDefault();
+    };
+    window.addEventListener("pointerup", releasePointerAnywhere, { capture: true, passive: false });
+    window.addEventListener("pointercancel", releasePointerAnywhere, { capture: true, passive: false });
+
+    gameShell.addEventListener("touchstart", (event) => {
+      if (raceTouchIsLocked() && event.touches.length > 1 && event.cancelable) event.preventDefault();
+    }, { capture: true, passive: false });
+    gameShell.addEventListener("touchmove", preventRaceGesture, { capture: true, passive: false });
+    gameShell.addEventListener("touchend", (event) => {
+      if (!raceTouchIsLocked()) return;
+      if (event.touches.length === 0) clearTouchControls();
+    }, { capture: true, passive: true });
+    gameShell.addEventListener("touchcancel", clearTouchControls, { capture: true, passive: true });
+    ["gesturestart", "gesturechange"].forEach((eventName) => {
+      gameShell.addEventListener(eventName, preventRaceGesture, { capture: true, passive: false });
+    });
+    gameShell.addEventListener("gestureend", (event) => {
+      preventRaceGesture(event);
+      clearTouchControls();
+    }, { capture: true, passive: false });
+    gameShell.addEventListener("dblclick", preventRaceGesture, { capture: true, passive: false });
+    gameShell.addEventListener("wheel", (event) => {
+      if (event.ctrlKey) preventRaceGesture(event);
+    }, { capture: true, passive: false });
 
     ["contextmenu", "selectstart", "dragstart"].forEach((eventName) => {
       touchControls.addEventListener(eventName, (event) => event.preventDefault());
@@ -1929,6 +2028,10 @@
       drawCalls: renderer.info.render.calls,
       triangles: renderer.info.render.triangles,
       cameraDistance: playerMesh ? Number(camera.position.distanceTo(playerMesh.position).toFixed(2)) : null,
+      input: {
+        controls: { ...controls },
+        activeTouchPointers: activeTouchPointers.size
+      },
       player: player ? {
         lap: player.lap,
         nextGate: player.nextGate,
