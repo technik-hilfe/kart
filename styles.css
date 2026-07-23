@@ -1000,20 +1000,20 @@ kbd {
 .touch-steer,
 .touch-pedals {
   display: flex;
-  gap: 8px;
+  gap: 14px;
 }
 
 .touch-controls button {
   display: grid;
   place-items: center;
-  width: 54px;
-  height: 54px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 108px;
+  height: 108px;
+  border: 2px solid rgba(255, 255, 255, 0.24);
   border-radius: 50%;
   color: var(--white);
-  background: rgba(14, 27, 36, 0.68);
-  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.2);
-  font-size: 22px;
+  background: rgba(14, 27, 36, 0.74);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.26);
+  font-size: 44px;
   font-weight: 900;
   pointer-events: auto;
   backdrop-filter: blur(5px);
@@ -1034,11 +1034,11 @@ kbd {
 }
 
 .touch-controls svg {
-  width: 27px;
-  height: 27px;
+  width: 54px;
+  height: 54px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 3;
+  stroke-width: 2.7;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -1046,7 +1046,7 @@ kbd {
 .touch-controls button.active {
   color: var(--ink);
   background: var(--yellow);
-  transform: translateY(2px);
+  transform: translateY(3px);
 }
 
 .touch-controls .touch-gas {
@@ -1056,7 +1056,22 @@ kbd {
 @media (pointer: coarse), (max-width: 700px) and (orientation: portrait) {
   .touch-controls:not([hidden]) { display: flex; }
   .controls-hint { display: none; }
-  .speed-card { bottom: 82px; }
+}
+
+@media (pointer: coarse) and (max-width: 520px) and (orientation: portrait) {
+  .touch-controls {
+    inset: 50% 0 auto;
+    align-items: center;
+    padding-right: calc(8px + var(--safe-right));
+    padding-left: calc(8px + var(--safe-left));
+    transform: translateY(-50%);
+  }
+
+  .touch-steer,
+  .touch-pedals {
+    flex-direction: column;
+    gap: 0;
+  }
 }
 
 @media (max-width: 700px), (max-height: 560px) {
