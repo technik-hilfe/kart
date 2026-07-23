@@ -232,6 +232,48 @@ canvas {
   padding: 8px 11px;
 }
 
+.freeroam-card {
+  top: 18px;
+  left: 18px;
+  border-color: rgba(66, 197, 212, 0.4);
+  background: rgba(16, 45, 48, 0.9);
+}
+
+.freeroam-card strong {
+  color: #bdf8ef;
+}
+
+.hud.is-freeroam .lap-card,
+.hud.is-freeroam .position-card,
+.hud.is-freeroam .time-card,
+.hud.is-freeroam .standings-card {
+  display: none;
+}
+
+.freeroam-menu-button {
+  position: absolute;
+  top: 72px;
+  right: 18px;
+  min-height: 34px;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: #edf8fa;
+  background: rgba(16, 29, 39, 0.86);
+  box-shadow: 0 8px 22px rgba(9, 18, 25, 0.22);
+  cursor: pointer;
+  pointer-events: auto;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.freeroam-menu-button:hover,
+.freeroam-menu-button:focus-visible {
+  outline: 2px solid rgba(66, 197, 212, 0.55);
+  background: rgba(24, 48, 59, 0.96);
+}
+
 .standing-row {
   display: grid;
   grid-template-columns: 17px 9px 1fr auto;
@@ -558,7 +600,7 @@ kbd {
 }
 
 .track-picker .menu-option-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .menu-option {
@@ -572,6 +614,16 @@ kbd {
 .difficulty-medium { --option-color: var(--yellow); }
 .difficulty-hard { --option-color: var(--red); }
 .track-spa { --option-color: #f4c928; }
+.track-yard { --option-color: #63d1bf; }
+
+.start-screen.freeroam-selected .track-picker {
+  grid-column: 1 / -1;
+}
+
+.start-screen.freeroam-selected .driver-preview,
+.start-screen.freeroam-selected .difficulty-picker {
+  display: none;
+}
 
 .menu-option input {
   position: absolute;
@@ -1082,6 +1134,8 @@ kbd {
   .position-card { top: 8px; min-width: 72px; }
   .time-card { top: 8px; right: 54px; min-width: 108px; }
   .standings-card { top: 50px; right: 8px; width: 125px; padding: 4px 7px; }
+  .freeroam-card { top: 8px; left: 8px; }
+  .freeroam-menu-button { top: 54px; right: 8px; min-height: 31px; padding: 0 10px; font-size: 8px; }
   .standing-row { grid-template-columns: 13px 7px 1fr auto; min-height: 16px; font-size: 8px; }
   .standing-status { font-size: 7px; }
   .speed-card { right: 8px; bottom: 8px; min-width: 123px; gap: 7px; }

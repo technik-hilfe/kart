@@ -7,9 +7,9 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="description" content="Mini Kart Cup 3D – ein kleines 3D-Kartrennen über drei Runden.">
+  <meta name="description" content="Mini Kart Cup 3D – vier Rennstrecken und ein frei befahrbarer 3D-Betriebshof.">
   <title>Mini Kart Cup 3D</title>
-  <link rel="stylesheet" href="styles.css?v=touch-buttons-2x-20260723">
+  <link rel="stylesheet" href="styles.css?v=depot-map5-20260723">
 </head>
 <body>
   <main class="game-shell" id="gameShell" aria-label="Mini Kart Cup">
@@ -40,6 +40,11 @@
 
       <div class="hud-card standings-card" id="standings" aria-label="Aktuelle Reihenfolge"></div>
 
+      <div class="hud-card freeroam-card" id="freeroamCard" hidden>
+        <span class="hud-kicker">KARTE 5</span>
+        <strong>FREIE FAHRT</strong>
+      </div>
+
       <div class="hud-card speed-card">
         <div class="speed-copy">
           <span class="hud-kicker">TEMPO</span>
@@ -52,6 +57,10 @@
         <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
         <span>oder Pfeiltasten</span>
       </div>
+
+      <button class="freeroam-menu-button" id="freeroamMenuButton" type="button" hidden>
+        Zum Menü
+      </button>
     </section>
 
     <div class="countdown" id="countdown" aria-live="assertive" hidden>3</div>
@@ -81,11 +90,11 @@
         <div class="flag-mark" aria-hidden="true">
           <span></span><span></span><span></span><span></span>
         </div>
-        <p class="eyebrow">ECHTES 3D &nbsp;&bull;&nbsp; 3 RUNDEN &nbsp;&bull;&nbsp; 5 GEGNER</p>
+        <p class="eyebrow" id="modeEyebrow">ECHTES 3D &nbsp;&bull;&nbsp; 3 RUNDEN &nbsp;&bull;&nbsp; 5 GEGNER</p>
         <h1>MINI KART<br><em>CUP 3D</em></h1>
-        <p class="intro-copy">Wähle Strecke, Schwierigkeit und Kartfarbe und tritt gegen fünf Bots an.</p>
+        <p class="intro-copy" id="introCopy">Wähle Strecke, Schwierigkeit und Kartfarbe und tritt gegen fünf Bots an.</p>
 
-        <div class="driver-preview" aria-label="Teilnehmer">
+        <div class="driver-preview" id="driverPreview" aria-label="Teilnehmer">
           <div class="driver-chip player-chip"><i id="playerColorMarker"></i><span><small>DU</small>Sunny</span></div>
           <div class="driver-chip" style="--driver-color:#ff7836"><i></i><span><small>BOT 1</small>Turbo Tom</span></div>
           <div class="driver-chip" style="--driver-color:#28cad8"><i></i><span><small>BOT 2</small>Kurven-Kim</span></div>
@@ -114,10 +123,14 @@
                 <input type="radio" name="trackChoice" value="track4">
                 <span><strong>4</strong><small>Spa · Belgien</small></span>
               </label>
+              <label class="menu-option track-yard">
+                <input type="radio" name="trackChoice" value="track5">
+                <span><strong>5</strong><small>Betriebshof</small></span>
+              </label>
             </div>
           </fieldset>
 
-          <fieldset class="menu-picker difficulty-picker">
+          <fieldset class="menu-picker difficulty-picker" id="difficultyPicker">
             <legend>SCHWIERIGKEIT</legend>
             <div class="menu-option-grid">
               <label class="menu-option difficulty-easy">
@@ -167,7 +180,7 @@
           Rennen starten <span aria-hidden="true">&#8594;</span>
         </button>
       </div>
-      <p class="start-note">Bleib auf der Strecke &ndash; Gras bremst dich aus.</p>
+      <p class="start-note" id="startNote">Bleib auf der Strecke &ndash; Gras bremst dich aus.</p>
     </section>
 
     <section class="screen-overlay result-screen" id="resultScreen" hidden>
@@ -213,6 +226,6 @@
     <noscript>Dieses Spiel benötigt JavaScript.</noscript>
   </main>
   <script src="three.min.js"></script>
-  <script src="game.js?v=touch-buttons-2x-20260723"></script>
+  <script src="game.js?v=depot-map5-20260723"></script>
 </body>
 </html>
